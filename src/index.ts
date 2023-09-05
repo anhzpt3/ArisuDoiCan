@@ -17,7 +17,7 @@ app.listen(process.env.PORT, () => {
 });
 
 // Create a new client instance
-const client: Client = new Client({
+export const client: Client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
 });
 

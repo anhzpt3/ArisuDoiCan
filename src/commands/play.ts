@@ -8,7 +8,6 @@ import {
 import { createAudioPlayer } from "@discordjs/voice";
 // import ytdl from "ytdl-core";
 import play, { SoundCloudStream, YouTubeStream, YouTubeVideo } from "play-dl";
-import { getYouTubeVideoIdFromUrl } from "../utils/common";
 
 interface Song {
   title: string;
@@ -25,6 +24,33 @@ export const setIsPlaying = (newState: boolean) => {
 }
 export let player = createAudioPlayer();
 // Biến để kiểm tra nếu bot đang phát bài
+
+player.on(AudioPlayerStatus.Playing, () => {
+  console.log("The audio player has started playing!");
+});
+
+player.on("error", (error) => {
+  console.error(`Player error: ${error.message} with resource`);
+  console.log(error);
+});
+
+player.on(AudioPlayerStatus.Idle, async () => {//khi hát hết 1 bài trong mảng playlist
+  playlist.shift();
+
+  if (playlist.length > 0) {// nếu danh sách bài hát lớn hơn 0
+    const streamYoutube = await play.stream(playlist[0]?.url);
+    const resource2 = createAudioResource(streamYoutube.stream, {
+      inputType: streamYoutube.type,
+    });
+    player.play(resource2);//chạy bài đầu tiên trong list
+    console.log(`Đang phát:  ${playlist[0]?.title}`);
+    // await interaction.followUp(`Đang phát:  ${playlist[0]?.title} `);
+
+  } else {
+    isPlaying = false;
+    // console.log('end list');
+  }
+});
 
 export const Play: CmdType = {
   data: new SlashCommandBuilder()
@@ -45,55 +71,24 @@ export const Play: CmdType = {
     };
     let searchText = interaction.options.getString("search", true);
 
-    if (searchText.startsWith('https://')) {
-      const videoId = getYouTubeVideoIdFromUrl(searchText);
-
-      if (!videoId) {
-        await interaction.followUp({
-          content: 'Không tìm thấy video nào!',
-          ephemeral: true,
-        });
-        return;
-      }
-
-      searchText = `https://youtu.be/${videoId}`;
-    }
-
-
-    player.on(AudioPlayerStatus.Playing, () => {
-      console.log("The audio player has started playing!");
-    });
-
-    player.on("error", (error) => {
-      console.error(`Player error: ${error.message} with resource`);
-      console.log(error);
-    });
-
-    player.on(AudioPlayerStatus.Idle, async () => {//khi hát hết 1 bài trong mảng playlist
-      playlist.shift();
-
-      if (playlist.length > 0) {// nếu danh sách bài hát lớn hơn 0
-        stream2 = await play.stream(playlist[0]?.url);
-        const resource2 = createAudioResource(stream2.stream, {
-          inputType: stream2.type,
-        });
-        player.play(resource2);//chạy bài đầu tiên trong list
-        await interaction.reply(`Đang phát:  ${playlist[0].title} `);
-      } else {
-        isPlaying = false;
-        // console.log('end list');
-      }
-    });
-
-    ///
+    let songInfo: YouTubeVideo;
     let stream2: YouTubeStream | SoundCloudStream;
-    let yt_info: YouTubeVideo[] = await play.search(searchText, {
-      limit: 1,
-    });
+
+    if (searchText.startsWith('https://')) {
+      const infoData = await play.video_info(searchText)
+
+      songInfo = infoData?.video_details
+    } else {
+      const listResult = await play.search(searchText, {
+        limit: 1,
+      })
+
+      songInfo = listResult[0]
+    }
 
     try {
       // play-dl
-      if (yt_info?.length <= 0) {
+      if (!songInfo) {
         await interaction.followUp({
           content: "Không tìm thấy video nào!",
           ephemeral: true,
@@ -102,13 +97,14 @@ export const Play: CmdType = {
       }
       //lây ra thông tin bài hát
       playlist.push({//đẩy bài nhạc vào list (playlist)
-        title: yt_info[0].title,
-        duration: yt_info[0].durationRaw,
-        url: yt_info[0].url
+        title: songInfo.title,
+        duration: songInfo.durationRaw,
+        url: songInfo.url
       });
 
-      if (!isPlaying) {//nếu không có bài nào đang phát
-        stream2 = await play.stream(playlist[0]?.url);
+      if (!isPlaying && playlist?.length > 0) {
+        //nếu không có bài nào đang phát và playlist có bài
+        stream2 = await play.stream(playlist[0].url);
         const resource2 = createAudioResource(stream2.stream, {
           inputType: stream2.type,
         });
@@ -132,7 +128,7 @@ export const Play: CmdType = {
     }
 
     await interaction.followUp({
-      content: `Playing ${yt_info[0].url}`,
+      content: `Playing ${songInfo.url}`,
       ephemeral: true,
     });
   },
