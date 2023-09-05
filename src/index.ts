@@ -52,7 +52,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 // nếu bot thoát khỏi kênh thoại, xóa toàn bộ playlist và set lại isplaying
 client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
   const botId = client.user.id;
-  if (botId && newState.member.id && newState.channel == null) {
+  if (botId === newState.member.id && !newState?.channel?.id) {
     setIsPlaying(false);
     setPlaylist([]);
   }
