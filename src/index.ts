@@ -1,4 +1,4 @@
-import { Client, Events, GatewayIntentBits } from "discord.js";
+import { ActivityOptions, ActivityType, Client, Events, GatewayIntentBits } from "discord.js";
 import { initCommands } from "./commands";
 import express from "express";
 import "dotenv/config";
@@ -17,11 +17,9 @@ app.listen(process.env.PORT, () => {
 });
 
 // Create a new client instance
-export const client: Client = new Client({
+const client: Client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
 });
-
-
 
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
@@ -70,3 +68,7 @@ client.once(Events.ClientReady, (c: Client) => {
 
 // Log in to Discord with your client's token
 client.login(process.env.DISCORD_BOT_TOKEN);
+
+export const setBotStatus = (name: string, options?: ActivityOptions) => {
+  client.user.setActivity(name, options);
+}

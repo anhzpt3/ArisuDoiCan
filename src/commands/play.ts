@@ -8,7 +8,7 @@ import {
 import { createAudioPlayer } from "@discordjs/voice";
 // import ytdl from "ytdl-core";
 import play, { SoundCloudStream, YouTubeStream, YouTubeVideo } from "play-dl";
-// import { client } from "..";
+// import { client } from ".."; t gây lỗi ở đây nè =)) import owr
 
 interface Song {
   title: string;
@@ -16,6 +16,7 @@ interface Song {
   url: string;
   thumbnail: string;
 }
+
 export let playlist: Song[] = [];// mảng danh sách bài
 export const setPlaylist = (newState: Song[]) => {
   playlist = newState;
@@ -44,12 +45,15 @@ player.on(AudioPlayerStatus.Idle, async () => {//khi hát hết 1 bài trong m�
 
   if (playlist.length > 0) {// nếu danh sách bài hát lớn hơn 0
     // client.user.setActivity({ name: `${playlist[0]?.title}`, type: ActivityType.Listening });
+    // setBotStatus(playlist[0]?.title, { type: ActivityType.Listening })
+
     const streamYoutube = await play.stream(playlist[0]?.url);
     const resource2 = createAudioResource(streamYoutube.stream, {
       inputType: streamYoutube.type,
     });
     player.play(resource2);//chạy bài đầu tiên trong list
     console.log(`Đang phát:  ${playlist[0]?.title}`);
+
     // trả ra tin nhắn mỗi khi next bài
     const embed = new EmbedBuilder()
       .setTitle(`PLAY NOW`)
