@@ -8,7 +8,7 @@ import {
 import { createAudioPlayer } from "@discordjs/voice";
 // import ytdl from "ytdl-core";
 import play, { SoundCloudStream, YouTubeStream, YouTubeVideo } from "play-dl";
-import { client } from "..";
+// import { client } from "..";
 
 interface Song {
   title: string;
@@ -43,7 +43,7 @@ player.on(AudioPlayerStatus.Idle, async () => {//khi hát hết 1 bài trong m�
   playlist.shift();
 
   if (playlist.length > 0) {// nếu danh sách bài hát lớn hơn 0
-    client.user.setActivity({ name: `${playlist[0]?.title}`, type: ActivityType.Listening });
+    // client.user.setActivity({ name: `${playlist[0]?.title}`, type: ActivityType.Listening });
     const streamYoutube = await play.stream(playlist[0]?.url);
     const resource2 = createAudioResource(streamYoutube.stream, {
       inputType: streamYoutube.type,
@@ -61,7 +61,7 @@ player.on(AudioPlayerStatus.Idle, async () => {//khi hát hết 1 bài trong m�
 
   } else {
     isPlaying = false;
-    client.user.setActivity(`free phai`);
+    // client.user.setActivity(`free phai`);
     // console.log('end list');
   }
 });
@@ -127,7 +127,7 @@ export const Play: CmdType = {
         stream2 = await play.stream(playlist[0].url);
         const resource2 = createAudioResource(stream2.stream, { inputType: stream2.type, });
         player.play(resource2);//chạy bài đầu tiên trong list
-        client.user.setActivity(playlist[0].title);
+        // client.user.setActivity(playlist[0].title);
         isPlaying = true;//biến đang hát = true
 
         const voiceConnection = joinVoiceChannel({//connet vô phòng thoại người dùng gọi bot nếu bot đang ở ngoài đường
