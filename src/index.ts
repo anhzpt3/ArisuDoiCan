@@ -21,6 +21,8 @@ export const client: Client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildVoiceStates],
 });
 
+
+
 client.on(Events.InteractionCreate, async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
@@ -53,6 +55,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
 client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
   const botId = client.user.id;
   if (botId === newState.member.id && !newState?.channel?.id) {
+    client.user.setActivity('zootobe');
     setIsPlaying(false);
     setPlaylist([]);
   }
@@ -61,6 +64,7 @@ client.on(Events.VoiceStateUpdate, async (oldState, newState) => {
 // When the client is ready, run this code (only once)
 // We use 'c' for the event parameter to keep it separate from the already defined 'client'
 client.once(Events.ClientReady, (c: Client) => {
+  client.user.setActivity('zootobe');
   console.log(`Ready! Logged in as ${c.user.tag}`);
 });
 

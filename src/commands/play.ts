@@ -1,5 +1,5 @@
 import { CmdType } from ".";
-import { GuildMember, SlashCommandBuilder } from "discord.js";
+import { GuildMember, SlashCommandBuilder, ActivityType, EmbedBuilder, } from "discord.js";
 import {
   AudioPlayerStatus,
   createAudioResource,
@@ -8,22 +8,27 @@ import {
 import { createAudioPlayer } from "@discordjs/voice";
 // import ytdl from "ytdl-core";
 import play, { SoundCloudStream, YouTubeStream, YouTubeVideo } from "play-dl";
+import { client } from "..";
 
 interface Song {
   title: string;
   duration: string;
   url: string;
+  thumbnail: string;
 }
 export let playlist: Song[] = [];// mảng danh sách bài
 export const setPlaylist = (newState: Song[]) => {
   playlist = newState;
 }
-export let isPlaying = false;
+export let isPlaying = false;// Biến để kiểm tra nếu bot đang phát bài
 export const setIsPlaying = (newState: boolean) => {
   isPlaying = newState;
 }
+export let lastRepliedChannel = null;//bot vừa reply kênh nào
+export const setLastRepliedChannel = (newState: any) => {
+  lastRepliedChannel = newState;
+}
 export let player = createAudioPlayer();
-// Biến để kiểm tra nếu bot đang phát bài
 
 player.on(AudioPlayerStatus.Playing, () => {
   console.log("The audio player has started playing!");
@@ -38,16 +43,25 @@ player.on(AudioPlayerStatus.Idle, async () => {//khi hát hết 1 bài trong m�
   playlist.shift();
 
   if (playlist.length > 0) {// nếu danh sách bài hát lớn hơn 0
+    client.user.setActivity({ name: `${playlist[0]?.title}`, type: ActivityType.Listening });
     const streamYoutube = await play.stream(playlist[0]?.url);
     const resource2 = createAudioResource(streamYoutube.stream, {
       inputType: streamYoutube.type,
     });
     player.play(resource2);//chạy bài đầu tiên trong list
     console.log(`Đang phát:  ${playlist[0]?.title}`);
-    // await interaction.followUp(`Đang phát:  ${playlist[0]?.title} `);
+    // trả ra tin nhắn mỗi khi next bài
+    const embed = new EmbedBuilder()
+      .setTitle(`PLAY NOW`)
+      .setColor(0xCF40FA)
+      .setThumbnail(playlist[0].thumbnail)
+      .setDescription(`${playlist[0]?.title} \n  ${playlist[0]?.duration}`)
+    lastRepliedChannel.send({ embeds: [embed] })
+    //await interaction.followUp(`Đang phát:  ${playlist[0]?.title} `);
 
   } else {
     isPlaying = false;
+    client.user.setActivity(`free phai`);
     // console.log('end list');
   }
 });
@@ -61,7 +75,10 @@ export const Play: CmdType = {
     ),
   execute: async (interaction) => {
     await interaction.deferReply();
-    // Tùy chỉnh chất lượng âm thanh
+
+    const embed = new EmbedBuilder()
+      .setTitle(`Add to list`)
+      .setColor(0xCF40FA)
 
     const guildMember = interaction.member as GuildMember;
     if (!guildMember?.voice?.channel?.id) {
@@ -99,17 +116,20 @@ export const Play: CmdType = {
       playlist.push({//đẩy bài nhạc vào list (playlist)
         title: songInfo.title,
         duration: songInfo.durationRaw,
-        url: songInfo.url
+        url: songInfo.url,
+        thumbnail: songInfo.thumbnails[0].url,
       });
 
+      embed.setDescription(`${songInfo.title}\n${songInfo.durationRaw}`)
+      embed.setThumbnail(songInfo.thumbnails[0].url)
       if (!isPlaying && playlist?.length > 0) {
         //nếu không có bài nào đang phát và playlist có bài
         stream2 = await play.stream(playlist[0].url);
-        const resource2 = createAudioResource(stream2.stream, {
-          inputType: stream2.type,
-        });
+        const resource2 = createAudioResource(stream2.stream, { inputType: stream2.type, });
         player.play(resource2);//chạy bài đầu tiên trong list
+        client.user.setActivity(playlist[0].title);
         isPlaying = true;//biến đang hát = true
+
         const voiceConnection = joinVoiceChannel({//connet vô phòng thoại người dùng gọi bot nếu bot đang ở ngoài đường
           channelId: guildMember.voice.channelId,
           guildId: interaction.guildId,
@@ -127,9 +147,12 @@ export const Play: CmdType = {
       console.log(error);
     }
 
-    await interaction.followUp({
-      content: `Playing ${songInfo.url}`,
-      ephemeral: true,
-    });
+    // trả followup link bài hát khi người dùng bấm /play
+    await interaction.followUp({ embeds: [embed] });
+    // lấy ra channel bot khi folloup
+    setLastRepliedChannel(interaction.channel);
+    // gửi thêm 1 tin nhắn vs thông tin là mảng ember
+
+
   },
 };

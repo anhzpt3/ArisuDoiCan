@@ -11,6 +11,7 @@ import { Reload } from "./reload";
 import { TextToSpeech } from "./tts";
 import { Skip } from "./skip";
 import { DisconnectCommand } from "./disconnect";
+import { Show } from "./show";
 
 export type CmdType = {
   data:
@@ -24,6 +25,7 @@ const listCommand = [
   //  Nyanz, 
   Play,
   Skip,
+  Show,
   DisconnectCommand,
   // Reload,
   // TextToSpeech

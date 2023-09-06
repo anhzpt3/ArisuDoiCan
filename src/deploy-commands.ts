@@ -2,7 +2,10 @@ import { getCommandsDeploy } from "./commands";
 import { REST, Routes } from "discord.js";
 import "dotenv/config";
 
+console.log('start')
 const commands = getCommandsDeploy();
+// console.log(commands)
+
 
 const token = String(process.env.DISCORD_BOT_TOKEN);
 const clientId = String(process.env.DISCORD_CLIENT_ID);
